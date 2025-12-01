@@ -1,23 +1,36 @@
+// server/config/db.js
 const mysql = require("mysql2");
 require("dotenv").config();
 
+// Tạo pool kết nối (Callback based)
 const pool = mysql.createPool({
-  // Dùng env variable, fallback về localhost cho dev nếu cần
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "root123",
-  database: process.env.DB_NAME || "football_db",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   port: process.env.DB_PORT || 3306,
   waitForConnections: true,
-  connectionLimit: 10,
+  connectionLimit: 5,
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-  // Cấu hình SSL cho môi trường Production (Aiven/Vercel)
-  ssl:
-    process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : null,
+  ssl: {
+    rejectUnauthorized: false, // Bắt buộc cho Aiven
+  },
 });
 
-module.exports = pool.promise();
+// Chuyển đổi sang Promise wrapper để dùng async/await
+const promisePool = pool.promise();
+
+// Test kết nối (Dùng promisePool thay vì pool thường)
+promisePool
+  .getConnection()
+  .then((conn) => {
+    console.log("✅ Connected to Aiven MySQL successfully!");
+    conn.release();
+  })
+  .catch((err) => {
+    console.error("❌ Database connection failed:", err.message);
+  });
+
+module.exports = promisePool;
