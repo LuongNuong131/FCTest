@@ -8,7 +8,9 @@ import Attendance from "../views/Attendance.vue";
 import PlayerForm from "@/components/PlayerForm.vue";
 import FundManagement from "@/views/FundManagement.vue";
 import TeamSplitting from "@/views/TeamSplitting.vue";
-import Profile from "../views/Profile.vue"; // IMPORT MỚI
+import Profile from "../views/Profile.vue";
+import PlayerEdit from "../views/PlayerEdit.vue";
+import TraitsManagement from "../views/TraitsManagement.vue";
 
 const routes = [
   { path: "/login", name: "Login", component: Login },
@@ -23,7 +25,13 @@ const routes = [
     name: "Profile",
     component: Profile,
     meta: { requiresAuth: true },
-  }, // ROUTE MỚI
+  },
+  {
+    path: "/players/:id/profile-edit",
+    name: "PlayerProfileEdit",
+    component: PlayerEdit,
+    meta: { requiresAuth: true },
+  },
   {
     path: "/players",
     name: "PlayersList",
@@ -68,6 +76,12 @@ const routes = [
     name: "TeamSplitting",
     component: TeamSplitting,
     meta: { requiresAuth: true },
+  },
+  {
+    path: "/traits",
+    name: "TraitsManagement",
+    component: TraitsManagement,
+    meta: { requiresAuth: true, requiresAdmin: true },
   },
 ];
 

@@ -9,13 +9,21 @@ const authStore = useAuthStore();
 const scrolled = ref(false);
 const mobileMenuOpen = ref(false);
 
-const navItems = [
-  { path: "/", label: "Dashboard", icon: "📊" },
-  { path: "/attendance", label: "Điểm Danh", icon: "📝" },
-  { path: "/players", label: "Cầu Thủ", icon: "👕" },
-  { path: "/teams", label: "Chia Đội", icon: "🆚" },
-  { path: "/fund", label: "Quỹ", icon: "💰" },
-];
+const navItems = computed(() => {
+  const items = [
+    { path: "/", label: "Dashboard", icon: "📊" },
+    { path: "/attendance", label: "Điểm Danh", icon: "📝" },
+    { path: "/players", label: "Cầu Thủ", icon: "👕" },
+    { path: "/teams", label: "Chia Đội", icon: "🆚" },
+    { path: "/fund", label: "Quỹ", icon: "💰" },
+  ];
+
+  if (authStore.isAdmin) {
+    items.push({ path: "/traits", label: "Chỉ Số Ẩn", icon: "⭐" });
+  }
+
+  return items;
+});
 
 onMounted(() => {
   window.addEventListener(

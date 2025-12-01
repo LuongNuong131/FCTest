@@ -14,15 +14,14 @@ const mapPlayer = (p) => ({
   imageUrl: p.image_url,
   totalAttendance: p.total_attendance,
   dob: formatDate(p.dob),
-  // FIX: Mapping dominant_foot (DB) -> dominantFoot (Front)
   dominantFoot: p.dominant_foot,
-  // 6 chỉ số mới (DB và Front đều là pac, sho,...)
   pac: p.pac,
   sho: p.sho,
   pas: p.pas,
   dri: p.dri,
   def: p.def,
   phy: p.phy,
+  traits: p.traits_json ? JSON.parse(p.traits_json) : null
 });
 
 exports.getAllPlayers = async (req, res) => {
@@ -124,12 +123,15 @@ exports.updatePlayer = async (req, res) => {
     dri,
     def,
     phy,
+    traits,
   } = req.body;
   try {
+    const traitsJson = traits ? JSON.stringify(traits) : null;
+
     await db.query(
-      `UPDATE players 
-       SET name=?, phone=?, dob=?, height_cm=?, weight_kg=?, position=?, jersey_number=?, image_url=?, dominant_foot=?, 
-       pac=?, sho=?, pas=?, dri=?, def=?, phy=? 
+      `UPDATE players
+       SET name=?, phone=?, dob=?, height_cm=?, weight_kg=?, position=?, jersey_number=?, image_url=?, dominant_foot=?,
+       pac=?, sho=?, pas=?, dri=?, def=?, phy=?, traits_json=?
        WHERE id=?`,
       [
         name,
@@ -147,6 +149,7 @@ exports.updatePlayer = async (req, res) => {
         dri,
         def,
         phy,
+        traitsJson,
         req.params.id,
       ]
     );

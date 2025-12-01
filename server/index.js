@@ -23,6 +23,7 @@ app.use("/api/players", require("./routes/playerRoutes"));
 app.use("/api/sessions", require("./routes/sessionRoutes"));
 app.use("/api/funds", require("./routes/fundRoutes"));
 app.use("/api/teams", require("./routes/teamRoutes"));
+app.use("/api/traits", require("./routes/traitRoutes"));
 
 app.get("/", (req, res) => {
   res.send("FCDBB API is running on Vercel with Aiven DB!");
