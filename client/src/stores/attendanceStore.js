@@ -23,7 +23,7 @@ export const useAttendanceStore = defineStore("attendance", () => {
     }
   };
 
-  // 2. Tạo buổi tập (Admin)
+  // 2. Tạo buổi tập (Admin) - UPDATE: Gửi thêm secretIconId
   const createSession = async (data) => {
     loading.value = true;
     try {
@@ -32,17 +32,21 @@ export const useAttendanceStore = defineStore("attendance", () => {
       return true;
     } catch (err) {
       console.error(err);
-      alert("Lỗi: " + (err.response?.data?.message || err.message));
+      // alert("Lỗi: " + (err.response?.data?.message || err.message)); // Có thể dùng Toast ở view thay vì alert
       return false;
     } finally {
       loading.value = false;
     }
   };
 
-  // 3. Tự điểm danh (Player)
-  const selfCheckIn = async (sessionId) => {
+  // 3. Tự điểm danh (Player) - UPDATE: Gửi thêm selectedIconId
+  const selfCheckIn = async (sessionId, selectedIconId) => {
     try {
-      await axiosClient.post("/sessions/check-in", { sessionId });
+      // Gửi cả iconId lên server để verify
+      await axiosClient.post("/sessions/check-in", {
+        sessionId,
+        selectedIconId,
+      });
       await fetchSessions();
 
       // Fix lỗi circular dependency bằng cách gọi store bên trong hàm
