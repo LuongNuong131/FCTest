@@ -4,7 +4,7 @@ import { useAttendanceStore } from "@/stores/attendanceStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useToastStore } from "@/stores/toastStore";
 import { VERIFY_ICONS } from "@/constants/icons";
-import axiosClient from "@/axiosClient";
+import axiosClient from "@/api/axiosClient"; // Đã sửa đường dẫn
 import Modal from "@/components/Modal.vue";
 
 const attendanceStore = useAttendanceStore();
@@ -21,7 +21,6 @@ const verifyOptions = ref([]);
 const selectedVerifyIcon = ref("");
 const targetSessionId = ref("");
 
-// Chia list thành 2 phần
 const activeSessions = computed(() =>
   attendanceStore.sessions.filter((s) => s.status === "OPEN")
 );
@@ -86,7 +85,6 @@ const submitCheckIn = async () => {
   }
 };
 
-// Gọi fetchSessions khi vào trang
 onMounted(() => attendanceStore.fetchSessions());
 </script>
 

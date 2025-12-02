@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import axiosClient from "@/axiosClient";
+import axiosClient from "@/api/axiosClient"; // Đã sửa đường dẫn
 
 export const usePlayerStore = defineStore("player", () => {
   const players = ref([]);

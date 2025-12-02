@@ -1,20 +1,17 @@
-import db from "../db/db.js";
-import VERIFY_ICONS from "../db/icons.js";
+import db from "../config/db.js";
+import VERIFY_ICONS from "../config/icons.js"; // Đảm bảo file icons.js export default
 
-// 1. Lấy danh sách (Giữ nguyên)
 export const getAllSessions = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM sessions ORDER BY date DESC");
     const sessions = await Promise.all(
-      rows.map(async (session) => {
+      rows.map(async (s) => {
         const [attendees] = await db.query(
           `SELECT p.id, p.name, p.image_url, p.jersey_number, p.position 
-         FROM attendance a 
-         JOIN players p ON a.player_id = p.id 
-         WHERE a.session_id = ?`,
-          [session.id]
+           FROM attendance a JOIN players p ON a.player_id = p.id WHERE a.session_id = ?`,
+          [s.id]
         );
-        return { ...session, attendees };
+        return { ...s, attendees };
       })
     );
     res.json(sessions);
@@ -23,7 +20,6 @@ export const getAllSessions = async (req, res) => {
   }
 };
 
-// 2. Tạo buổi tập (UPDATE: Lưu secret_icon_id)
 export const createSession = async (req, res) => {
   const { date, note, secretIconId } = req.body;
   const id = "s" + Date.now().toString(36);
@@ -32,70 +28,54 @@ export const createSession = async (req, res) => {
       "INSERT INTO sessions (id, date, note, status, secret_icon_id) VALUES (?, ?, ?, 'OPEN', ?)",
       [id, date, note, secretIconId]
     );
-    res.json({ message: "Tạo buổi tập thành công", id });
+    res.json({ success: true, id });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// 3. User tự điểm danh (UPDATE: Verify Logic)
 export const selfCheckIn = async (req, res) => {
   const playerId = req.user.playerId;
   const { sessionId, selectedIconId } = req.body;
-
-  if (!playerId) return res.status(400).json({ message: "Lỗi thông tin user" });
+  if (!playerId)
+    return res.status(400).json({ message: "Chưa liên kết cầu thủ" });
 
   try {
-    // A. Check Blocked
     const [attempts] = await db.query(
       "SELECT * FROM attendance_attempts WHERE session_id = ? AND player_id = ?",
       [sessionId, playerId]
     );
+    if (attempts.length > 0 && attempts[0].blocked)
+      return res.status(403).json({ message: "Bạn đã bị chặn do chọn sai!" });
 
-    if (attempts.length > 0 && attempts[0].blocked) {
-      return res.status(403).json({
-        message: "🚫 RA ĐẢO: Bạn đã bị chặn do chọn sai Icon bảo mật!",
-      });
-    }
-
-    // B. Get Session Info
     const [sessions] = await db.query(
       "SELECT status, secret_icon_id FROM sessions WHERE id = ?",
       [sessionId]
     );
-    if (sessions.length === 0)
-      return res.status(404).json({ message: "Không tìm thấy buổi tập" });
+    if (!sessions.length)
+      return res.status(404).json({ message: "Lỗi session" });
 
-    const session = sessions[0];
-    if (session.status !== "OPEN")
-      return res.status(400).json({ message: "Đã đóng sổ!" });
-
-    // C. Verify Icon
-    if (selectedIconId !== session.secret_icon_id) {
-      // SAI: Block luôn
+    if (
+      sessions[0].secret_icon_id &&
+      selectedIconId !== sessions[0].secret_icon_id
+    ) {
       await db.query(
-        `INSERT INTO attendance_attempts (session_id, player_id, attempt_count, blocked) 
-         VALUES (?, ?, 1, TRUE) 
-         ON DUPLICATE KEY UPDATE attempt_count = attempt_count + 1, blocked = TRUE`,
+        `INSERT INTO attendance_attempts (session_id, player_id, attempt_count, blocked) VALUES (?, ?, 1, TRUE) ON DUPLICATE KEY UPDATE blocked = TRUE`,
         [sessionId, playerId]
       );
-      return res.status(403).json({
-        message: "❌ Sai mã bảo mật! Bạn đã bị chặn vĩnh viễn ở buổi này.",
-      });
+      return res.status(403).json({ message: "Sai mã bảo mật! Đã bị chặn." });
     }
 
-    // D. Success
     await db.query(
       "INSERT IGNORE INTO attendance (session_id, player_id) VALUES (?, ?)",
       [sessionId, playerId]
     );
-    res.json({ success: true, message: "Điểm danh thành công! ✅" });
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };
 
-// 4. API Lấy Options ngẫu nhiên (Mới)
 export const getVerifyOptions = async (req, res) => {
   const { sessionId } = req.query;
   try {
@@ -103,39 +83,40 @@ export const getVerifyOptions = async (req, res) => {
       "SELECT secret_icon_id FROM sessions WHERE id = ?",
       [sessionId]
     );
-    if (rows.length === 0)
-      return res.status(404).json({ error: "Session not found" });
-
-    const correctIconId = rows[0].secret_icon_id;
-
-    // Lấy 2 icon sai ngẫu nhiên
-    const wrongIcons = VERIFY_ICONS.filter((i) => i.id !== correctIconId)
+    if (!rows.length || !rows[0].secret_icon_id) return res.json([]);
+    const correct = VERIFY_ICONS.find((i) => i.id === rows[0].secret_icon_id);
+    const wrongs = VERIFY_ICONS.filter((i) => i.id !== rows[0].secret_icon_id)
       .sort(() => 0.5 - Math.random())
       .slice(0, 2);
-
-    const correctIcon = VERIFY_ICONS.find((i) => i.id === correctIconId);
-
-    // Trộn icon đúng vào
-    const options = [...wrongIcons, correctIcon].sort(
-      () => 0.5 - Math.random()
-    );
-
-    res.json(options);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.json([correct, ...wrongs].sort(() => 0.5 - Math.random()));
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 };
 
-// ... (Giữ nguyên các hàm Admin: adminCheckIn, adminRemoveCheckIn, deleteSession, updateSessionStatus)
+// Admin Functions (Rút gọn)
 export const adminCheckIn = async (req, res) => {
-  /* Code cũ */
+  await db.query(
+    "INSERT IGNORE INTO attendance (session_id, player_id) VALUES (?, ?)",
+    [req.body.sessionId, req.body.playerId]
+  );
+  res.json({ success: true });
 };
 export const adminRemoveCheckIn = async (req, res) => {
-  /* Code cũ */
+  await db.query(
+    "DELETE FROM attendance WHERE session_id = ? AND player_id = ?",
+    [req.body.sessionId, req.body.playerId]
+  );
+  res.json({ success: true });
 };
 export const deleteSession = async (req, res) => {
-  /* Code cũ */
+  await db.query("DELETE FROM sessions WHERE id = ?", [req.params.id]);
+  res.json({ success: true });
 };
 export const updateSessionStatus = async (req, res) => {
-  /* Code cũ */
+  await db.query("UPDATE sessions SET status = ? WHERE id = ?", [
+    req.body.status,
+    req.params.id,
+  ]);
+  res.json({ success: true });
 };

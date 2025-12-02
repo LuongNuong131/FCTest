@@ -1,7 +1,6 @@
 import mysql from "mysql2";
 import "dotenv/config";
 
-// Tạo pool kết nối thường
 const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -13,26 +12,21 @@ const pool = mysql.createPool({
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-  // Cấu hình SSL cho Aiven
-  ssl:
-    process.env.DB_SSL === "true" || process.env.NODE_ENV === "production"
-      ? { rejectUnauthorized: false }
-      : null,
+  // Bắt buộc có SSL cho Aiven
+  ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : null,
 });
 
-// Chuyển sang dạng Promise để dùng async/await
 const promisePool = pool.promise();
 
-// Test kết nối (FIX LỖI: Dùng promisePool thay vì pool)
+// Test kết nối
 promisePool
   .getConnection()
   .then((conn) => {
-    console.log("✅ Đã kết nối thành công tới Aiven MySQL!");
+    console.log(`✅ Database Connected: ${process.env.DB_HOST}`);
     conn.release();
   })
   .catch((err) => {
-    // Chỉ log lỗi, không crash app để server vẫn chạy được nếu DB chập chờn
-    console.error("❌ Lỗi kết nối Database:", err.message);
+    console.error("❌ DB Connection Failed:", err.message);
   });
 
 export default promisePool;

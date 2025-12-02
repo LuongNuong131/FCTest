@@ -1,12 +1,11 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import axiosClient from "@/axiosClient";
+import axiosClient from "@/api/axiosClient"; // Đã sửa đường dẫn
 
 export const useFundStore = defineStore("fund", () => {
   const funds = ref([]);
   const loading = ref(false);
 
-  // 1. Lấy danh sách quỹ (Đổi tên hàm này cho khớp với logic chung)
   const fetchFunds = async () => {
     loading.value = true;
     try {
@@ -19,11 +18,10 @@ export const useFundStore = defineStore("fund", () => {
     }
   };
 
-  // 2. Thêm quỹ mới
   const createFund = async (fundData) => {
     try {
       await axiosClient.post("/funds", fundData);
-      await fetchFunds(); // Tải lại danh sách sau khi thêm
+      await fetchFunds();
       return true;
     } catch (err) {
       console.error(err);
@@ -31,7 +29,6 @@ export const useFundStore = defineStore("fund", () => {
     }
   };
 
-  // 3. Xóa quỹ
   const deleteFund = async (id) => {
     try {
       await axiosClient.delete(`/funds/${id}`);
@@ -43,12 +40,10 @@ export const useFundStore = defineStore("fund", () => {
     }
   };
 
-  // Tính tổng tiền
   const totalBalance = computed(() => {
     return funds.value.reduce((total, item) => total + Number(item.amount), 0);
   });
 
-  // Format hiển thị (ví dụ: 500k, 1.2M)
   const formattedBalance = computed(() => {
     const val = totalBalance.value;
     if (val >= 1000000) return (val / 1000000).toFixed(1) + "M";
@@ -59,7 +54,7 @@ export const useFundStore = defineStore("fund", () => {
   return {
     funds,
     loading,
-    fetchFunds, // Quan trọng: Tên hàm này phải khớp với bên View gọi
+    fetchFunds,
     createFund,
     deleteFund,
     totalBalance,

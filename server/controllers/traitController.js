@@ -1,4 +1,4 @@
-import db from "../db/db.js";
+import db from "../config/db.js";
 
 // Lấy tất cả custom traits
 export const getCustomTraits = async (req, res) => {

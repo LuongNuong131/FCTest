@@ -3,8 +3,8 @@ import { ref, onMounted, computed } from "vue";
 import { useAuthStore } from "@/stores/authStore";
 import { usePlayerStore } from "@/stores/playerStore";
 import { useToastStore } from "@/stores/toastStore";
-import { DEFAULT_TRAITS } from "@/constants/index";
-import axiosClient from "@/axiosClient";
+import { DEFAULT_TRAITS } from "@/data/defaultTraits"; // Đã sửa đường dẫn
+import axiosClient from "@/api/axiosClient"; // Đã sửa đường dẫn
 import PlayerCard from "@/components/PlayerCard.vue";
 
 const authStore = useAuthStore();
@@ -82,7 +82,7 @@ const toggleTrait = (trait, level) => {
       current.push({
         id: trait.id,
         name: trait.name,
-        image: trait.image,
+        image: trait.image || trait.image_url,
         level: "gold",
       });
     }
@@ -96,7 +96,7 @@ const toggleTrait = (trait, level) => {
       current.push({
         id: trait.id,
         name: trait.name,
-        image: trait.image,
+        image: trait.image || trait.image_url,
         level: "silver",
       });
   }
@@ -216,7 +216,7 @@ const handleUpdate = async () => {
             class="bg-slate-800 p-4 rounded-2xl border border-white/5 flex flex-col items-center gap-3 relative transition-all hover:bg-slate-700 hover:scale-105 group"
           >
             <img
-              :src="trait.image"
+              :src="trait.image || trait.image_url"
               class="w-12 h-12 object-contain filter drop-shadow-md group-hover:scale-110 transition-transform"
             />
             <span

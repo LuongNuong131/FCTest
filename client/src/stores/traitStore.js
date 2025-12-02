@@ -1,20 +1,20 @@
-import { defineStore } from 'pinia';
-import axiosClient from '../api/axiosClient';
+import { defineStore } from "pinia";
+import axiosClient from "@/api/axiosClient"; // Đã sửa đường dẫn
 
-export const useTraitStore = defineStore('trait', {
+export const useTraitStore = defineStore("trait", {
   state: () => ({
     customTraits: [],
-    loading: false
+    loading: false,
   }),
 
   actions: {
     async fetchCustomTraits() {
       this.loading = true;
       try {
-        const response = await axiosClient.get('/traits');
+        const response = await axiosClient.get("/traits");
         this.customTraits = response.data;
       } catch (error) {
-        console.error('Failed to fetch custom traits:', error);
+        console.error("Failed to fetch custom traits:", error);
       } finally {
         this.loading = false;
       }
@@ -22,10 +22,10 @@ export const useTraitStore = defineStore('trait', {
 
     async createCustomTrait(traitData) {
       try {
-        await axiosClient.post('/traits', traitData);
+        await axiosClient.post("/traits", traitData);
         await this.fetchCustomTraits();
       } catch (error) {
-        console.error('Failed to create custom trait:', error);
+        console.error("Failed to create custom trait:", error);
         throw error;
       }
     },
@@ -35,7 +35,7 @@ export const useTraitStore = defineStore('trait', {
         await axiosClient.put(`/traits/${id}`, traitData);
         await this.fetchCustomTraits();
       } catch (error) {
-        console.error('Failed to update custom trait:', error);
+        console.error("Failed to update custom trait:", error);
         throw error;
       }
     },
@@ -45,9 +45,9 @@ export const useTraitStore = defineStore('trait', {
         await axiosClient.delete(`/traits/${id}`);
         await this.fetchCustomTraits();
       } catch (error) {
-        console.error('Failed to delete custom trait:', error);
+        console.error("Failed to delete custom trait:", error);
         throw error;
       }
-    }
-  }
+    },
+  },
 });

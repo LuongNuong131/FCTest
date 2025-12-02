@@ -2,16 +2,11 @@ import { createApp } from "vue";
 import { createPinia } from "pinia";
 import App from "./App.vue";
 import router from "./router";
-import "./assets/index.css";
+import "./index.css"; // Fix đường dẫn
 
-// Force Dark Mode Default
 if (!localStorage.getItem("theme")) {
   localStorage.setItem("theme", "dark");
   document.documentElement.classList.add("dark");
-} else {
-  if (localStorage.getItem("theme") === "dark") {
-    document.documentElement.classList.add("dark");
-  }
 }
 
 const app = createApp(App);

@@ -1,6 +1,5 @@
-import db from "../db/db.js";
+import db from "../config/db.js"; // FIXED PATH
 
-// 1. Lấy danh sách quỹ
 export const getAllFunds = async (req, res) => {
   try {
     const [rows] = await db.query("SELECT * FROM funds ORDER BY date DESC");
@@ -10,7 +9,6 @@ export const getAllFunds = async (req, res) => {
   }
 };
 
-// 2. Tạo quỹ mới
 export const createFund = async (req, res) => {
   const { contributorName, amount, note } = req.body;
   const id = "f" + Date.now().toString(36);
@@ -25,7 +23,6 @@ export const createFund = async (req, res) => {
   }
 };
 
-// 3. Xóa quỹ (SỬA LỖI: Đã thêm hàm này)
 export const deleteFund = async (req, res) => {
   try {
     await db.query("DELETE FROM funds WHERE id = ?", [req.params.id]);

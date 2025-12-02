@@ -1,6 +1,6 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import axiosClient from "@/axiosClient";
+import axiosClient from "@/api/axiosClient"; // Đã sửa đường dẫn
 
 export const useTeamStore = defineStore("team", () => {
   const teams = ref([]);
@@ -11,7 +11,7 @@ export const useTeamStore = defineStore("team", () => {
     loading.value = true;
     error.value = null;
     try {
-      const res = await axiosClient.get("/teams"); // API từ teamController
+      const res = await axiosClient.get("/teams");
       teams.value = res.data;
     } catch (err) {
       error.value = "Không thể tải dữ liệu đội bóng.";
