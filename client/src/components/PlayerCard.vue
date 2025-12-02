@@ -21,103 +21,133 @@ const overallRating = computed(() => {
   return avg > 99 ? 99 : avg;
 });
 
-// Tìm Gold Trait để hiển thị nổi bật
-const goldTrait = computed(() => {
-  return props.player.traits?.find((t) => t.type === "gold");
+// Lấy 3 Traits xịn nhất (Gold trước)
+const displayTraits = computed(() => {
+  if (!props.player?.traits) return [];
+  return [...props.player.traits]
+    .sort((a, b) => (a.type === "gold" ? -1 : 1))
+    .slice(0, 3);
 });
 </script>
 
 <template>
-  <div class="relative w-64 h-96 group select-none perspective-1000">
-    <!-- Card Inner -->
+  <div
+    class="relative w-[320px] h-[480px] group select-none perspective-1000 mx-auto"
+  >
     <div
-      class="absolute inset-0 bg-gradient-to-br from-slate-800 to-slate-900 rounded-[1.5rem] border-[3px] border-slate-600 shadow-2xl overflow-hidden transition-all duration-500 transform group-hover:scale-105 group-hover:-rotate-1 group-hover:shadow-[0_0_30px_rgba(255,215,0,0.3)]"
+      class="absolute inset-0 rounded-t-[3rem] rounded-b-[2rem] overflow-hidden transition-all duration-500 transform group-hover:scale-105 group-hover:-translate-y-2 z-0 shadow-[0_0_30px_rgba(255,215,0,0.4)] group-hover:shadow-[0_0_50px_rgba(255,215,0,0.8)]"
     >
-      <!-- Background Effect -->
       <div
-        class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-30"
+        class="absolute inset-0 bg-gradient-to-b from-[#fefcea] via-[#f1da97] to-[#bfa369]"
       ></div>
 
-      <!-- Top Info -->
-      <div class="absolute top-4 left-4 z-20">
+      <div
+        class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"
+      ></div>
+
+      <div
+        class="absolute inset-[6px] border-[2px] border-[#9c824a] rounded-t-[2.5rem] rounded-b-[1.5rem] opacity-70"
+      ></div>
+      <div
+        class="absolute inset-[10px] border border-[#fff] opacity-30 rounded-t-[2.4rem] rounded-b-[1.4rem]"
+      ></div>
+    </div>
+
+    <div class="relative z-10 w-full h-full text-[#3d3118]">
+      <div class="absolute top-10 left-8 flex flex-col items-center z-20">
         <div
-          class="text-4xl font-black text-yellow-400 drop-shadow-md font-mono"
+          class="text-6xl font-[900] tracking-tighter leading-none text-[#3d3118] drop-shadow-sm"
         >
           {{ overallRating }}
         </div>
-        <div class="text-lg font-bold text-slate-300 uppercase tracking-wider">
-          {{ player.position?.substring(0, 3) }}
+        <div class="text-xl font-bold uppercase tracking-wide mt-1">
+          {{ player.position?.substring(0, 3) || "CAM" }}
         </div>
-
-        <!-- Team Logo (Optional) -->
         <div
-          class="mt-2 w-8 h-8 bg-white/10 rounded-full flex items-center justify-center"
+          class="mt-2 w-8 h-6 border border-black/10 shadow-sm bg-red-600 flex items-center justify-center"
         >
-          <span class="text-xs">FC</span>
+          <span class="text-yellow-400 text-xs">★</span>
         </div>
       </div>
 
-      <!-- Player Image -->
       <div
-        class="absolute top-10 right-[-10px] w-48 h-48 z-10 transition-transform duration-500 group-hover:scale-110"
+        class="absolute top-6 right-[-10px] w-[230px] h-[230px] transition-transform duration-500 group-hover:scale-110 group-hover:translate-x-1 z-10"
       >
         <img
           :src="player.imageUrl || 'https://placehold.co/200x200?text=No+Img'"
-          class="w-full h-full object-cover object-top drop-shadow-[0_10px_10px_rgba(0,0,0,0.5)] mask-image-gradient"
+          class="w-full h-full object-cover object-top drop-shadow-[10px_10px_15px_rgba(0,0,0,0.4)] mask-fade-bottom"
         />
       </div>
 
-      <!-- Player Name -->
-      <div class="absolute top-[60%] w-full text-center z-20">
+      <div class="absolute top-[52%] w-full text-center px-4 z-20">
         <h2
-          class="text-xl font-black text-white uppercase tracking-tighter truncate px-2 drop-shadow-lg"
+          class="text-2xl font-[900] uppercase tracking-tighter text-[#2a2212] drop-shadow-sm truncate py-1"
         >
           {{ player.name }}
         </h2>
-        <div
-          class="h-0.5 w-1/2 bg-gradient-to-r from-transparent via-yellow-500 to-transparent mx-auto mt-1"
-        ></div>
+        <div class="w-2/3 h-[2px] bg-[#9c824a]/60 mx-auto mt-1 mb-2"></div>
       </div>
 
-      <!-- Stats Grid -->
-      <div class="absolute bottom-4 w-full px-4 z-20">
+      <div class="absolute bottom-[20%] w-full px-8 z-20">
         <div
-          class="grid grid-cols-2 gap-x-2 gap-y-1 text-xs font-bold text-slate-300"
+          class="grid grid-cols-2 gap-x-8 gap-y-1 text-base font-bold text-[#2a2212]"
         >
-          <div class="flex justify-between">
-            <span class="text-yellow-500">PAC</span>
+          <div class="flex justify-between border-b border-[#9c824a]/20">
             <span>{{ player.pac || 50 }}</span>
+            <span class="opacity-70 font-normal">PAC</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-yellow-500">DRI</span>
+          <div class="flex justify-between border-b border-[#9c824a]/20">
             <span>{{ player.dri || 50 }}</span>
+            <span class="opacity-70 font-normal">DRI</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-yellow-500">SHO</span>
+          <div class="flex justify-between border-b border-[#9c824a]/20">
             <span>{{ player.sho || 50 }}</span>
+            <span class="opacity-70 font-normal">SHO</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-yellow-500">DEF</span>
+          <div class="flex justify-between border-b border-[#9c824a]/20">
             <span>{{ player.def || 50 }}</span>
+            <span class="opacity-70 font-normal">DEF</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-yellow-500">PAS</span>
+          <div class="flex justify-between border-b border-[#9c824a]/20">
             <span>{{ player.pas || 50 }}</span>
+            <span class="opacity-70 font-normal">PAS</span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-yellow-500">PHY</span>
+          <div class="flex justify-between border-b border-[#9c824a]/20">
             <span>{{ player.phy || 50 }}</span>
+            <span class="opacity-70 font-normal">PHY</span>
           </div>
         </div>
       </div>
 
-      <!-- Gold Trait Badge -->
-      <div
-        v-if="goldTrait"
-        class="absolute bottom-2 right-2 w-10 h-10 bg-gradient-to-b from-yellow-300 to-yellow-600 rounded-full flex items-center justify-center border-2 border-white shadow-lg z-30"
-        :title="goldTrait.name"
-      >
-        <img :src="goldTrait.image" class="w-6 h-6 object-contain" />
+      <div class="absolute bottom-6 w-full flex justify-center gap-3 px-4 z-20">
+        <div
+          v-for="trait in displayTraits"
+          :key="trait.id"
+          class="relative group/trait"
+        >
+          <div
+            :class="[
+              'w-9 h-9 rounded-full flex items-center justify-center border shadow-md transition-all hover:scale-125 bg-white',
+              trait.type === 'gold'
+                ? 'border-yellow-600 ring-2 ring-yellow-400'
+                : 'border-slate-400',
+            ]"
+          >
+            <img :src="trait.image" class="w-6 h-6 object-contain" />
+          </div>
+          <div
+            class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-black/90 text-white text-[10px] rounded whitespace-nowrap opacity-0 group-hover/trait:opacity-100 pointer-events-none z-30 shadow-lg"
+          >
+            {{ trait.name }}
+          </div>
+        </div>
+
+        <div
+          v-if="displayTraits.length === 0"
+          class="text-xs text-[#9c824a] italic opacity-70"
+        >
+          Chưa có chỉ số ẩn
+        </div>
       </div>
     </div>
   </div>
@@ -127,7 +157,7 @@ const goldTrait = computed(() => {
 .perspective-1000 {
   perspective: 1000px;
 }
-.mask-image-gradient {
+.mask-fade-bottom {
   -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
   mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
 }

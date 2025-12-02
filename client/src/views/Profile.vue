@@ -12,11 +12,10 @@ const playerStore = usePlayerStore();
 const toast = useToastStore();
 
 const loading = ref(false);
-const playerData = ref({});
-const customTraits = ref([]); // Từ DB
-const activeTab = ref("info"); // info, traits, admin_traits
+const playerData = ref({ traits: [] }); // Mặc định traits là mảng rỗng
+const customTraits = ref([]);
+const activeTab = ref("info");
 
-// Load data
 onMounted(async () => {
   await playerStore.fetchPlayers();
   await fetchCustomTraits();
@@ -25,8 +24,7 @@ onMounted(async () => {
   if (pid) {
     const p = playerStore.players.find((x) => x.id === pid);
     if (p) {
-      playerData.value = JSON.parse(JSON.stringify(p)); // Deep copy
-      // Init traits if null
+      playerData.value = JSON.parse(JSON.stringify(p)); // Deep copy để edit không ảnh hưởng ngay
       if (!playerData.value.traits) playerData.value.traits = [];
     }
   }
@@ -35,21 +33,14 @@ onMounted(async () => {
 const fetchCustomTraits = async () => {
   try {
     const res = await axiosClient.get("/traits");
-    customTraits.value = res.data.map((t) => ({
-      ...t,
-      image: t.image_url,
-      source: "db",
-    }));
+    customTraits.value = res.data.map((t) => ({ ...t, image: t.image_url }));
   } catch (e) {
     console.error(e);
   }
 };
 
-const allTraits = computed(() => {
-  return [...DEFAULT_TRAITS, ...customTraits.value];
-});
+const allTraits = computed(() => [...DEFAULT_TRAITS, ...customTraits.value]);
 
-// Trait Selection Logic
 const toggleTrait = (trait) => {
   const currentTraits = playerData.value.traits || [];
   const exists = currentTraits.find((t) => t.id === trait.id);
@@ -58,11 +49,10 @@ const toggleTrait = (trait) => {
     // Remove
     playerData.value.traits = currentTraits.filter((t) => t.id !== trait.id);
   } else {
-    // Add Check
+    // Add (Check max 1 Gold)
     if (trait.type === "gold") {
       const hasGold = currentTraits.some((t) => t.type === "gold");
-      if (hasGold)
-        return toast.warning("Chỉ được chọn 1 chỉ số Vàng thôi đại ca!");
+      if (hasGold) return toast.warning("Chỉ được 1 Chỉ số Vàng thôi nhé!");
     }
     playerData.value.traits.push(trait);
   }
@@ -71,24 +61,23 @@ const toggleTrait = (trait) => {
 const isTraitSelected = (id) =>
   playerData.value.traits?.some((t) => t.id === id);
 
-// Save Profile
 const handleUpdate = async () => {
   loading.value = true;
   try {
+    // Gửi update lên server
     await playerStore.updatePlayer(playerData.value.id, playerData.value);
-    toast.success("Cập nhật hồ sơ & Chỉ số ẩn thành công!");
-    // Update local user display name if changed
-    if (authStore.user.displayName !== playerData.value.name) {
-      authStore.user.displayName = playerData.value.name;
-    }
+    toast.success("Cập nhật thành công!");
+
+    // Cập nhật lại store để đồng bộ ngay
+    await playerStore.fetchPlayers();
   } catch (e) {
-    toast.error(e.response?.data?.message || e.message);
+    toast.error("Lỗi: " + (e.response?.data?.message || e.message));
   } finally {
     loading.value = false;
   }
 };
 
-// Admin Create Trait
+// Admin tạo trait
 const newTrait = reactive({
   name: "",
   type: "normal",
@@ -98,11 +87,10 @@ const newTrait = reactive({
 const handleCreateTrait = async () => {
   try {
     await axiosClient.post("/traits", newTrait);
-    toast.success("Đã tạo chỉ số mới!");
+    toast.success("Đã tạo trait mới!");
     await fetchCustomTraits();
     newTrait.name = "";
     newTrait.image_url = "";
-    newTrait.description = "";
   } catch (e) {
     toast.error("Lỗi tạo trait");
   }
@@ -110,19 +98,17 @@ const handleCreateTrait = async () => {
 </script>
 
 <template>
-  <div class="max-w-6xl mx-auto pb-20 space-y-8">
-    <!-- Top Section: Card Preview & Info -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      <!-- Left: Preview Card -->
-      <div class="flex justify-center md:justify-start">
+  <div class="max-w-7xl mx-auto pb-20 space-y-8 px-4">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div
+        class="lg:col-span-4 flex justify-center lg:justify-start lg:sticky lg:top-24 h-fit"
+      >
         <PlayerCard :player="playerData" />
       </div>
 
-      <!-- Right: Tabs & Forms -->
       <div
-        class="md:col-span-2 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl"
+        class="lg:col-span-8 bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl p-6 shadow-2xl"
       >
-        <!-- Tabs -->
         <div
           class="flex gap-2 mb-6 border-b border-white/10 pb-2 overflow-x-auto"
         >
@@ -158,20 +144,19 @@ const handleCreateTrait = async () => {
                 : 'text-slate-400 hover:bg-white/5',
             ]"
           >
-            🛡️ Tạo Trait
+            🛡️ Admin
           </button>
         </div>
 
-        <!-- Tab 1: Info -->
         <div v-if="activeTab === 'info'" class="space-y-4 animate-fade-in">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label class="label">Họ Tên</label>
-              <input v-model="playerData.name" class="input" />
+              <label class="label">Họ Tên</label
+              ><input v-model="playerData.name" class="input" />
             </div>
             <div>
-              <label class="label">Số Áo</label>
-              <input
+              <label class="label">Số Áo</label
+              ><input
                 v-model="playerData.jerseyNumber"
                 type="number"
                 class="input"
@@ -187,19 +172,14 @@ const handleCreateTrait = async () => {
               </select>
             </div>
             <div>
-              <label class="label">Avatar URL</label>
-              <input
-                v-model="playerData.imageUrl"
-                class="input"
-                placeholder="Link ảnh..."
-              />
+              <label class="label">Avatar URL</label
+              ><input v-model="playerData.imageUrl" class="input" />
             </div>
           </div>
-
           <h3
             class="text-green-400 font-bold mt-4 pt-4 border-t border-white/10"
           >
-            Chỉ Số In-Game
+            Chỉ Số (1-99)
           </h3>
           <div class="grid grid-cols-3 gap-3">
             <div
@@ -218,16 +198,12 @@ const handleCreateTrait = async () => {
           </div>
         </div>
 
-        <!-- Tab 2: Traits Selector -->
         <div v-if="activeTab === 'traits'" class="animate-fade-in">
           <p class="text-sm text-slate-400 mb-4">
-            Chọn tối đa
-            <span class="text-yellow-400 font-bold">1 Trait Vàng</span>. Trait
-            thường thoải mái.
+            Chọn các kỹ năng đặc biệt cho cầu thủ (Click để chọn/bỏ chọn).
           </p>
-
           <div
-            class="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[400px] overflow-y-auto custom-scrollbar pr-2"
+            class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[500px] overflow-y-auto custom-scrollbar pr-2"
           >
             <div
               v-for="trait in allTraits"
@@ -248,7 +224,6 @@ const handleCreateTrait = async () => {
               >
                 ✔
               </div>
-
               <img :src="trait.image" class="w-10 h-10 object-contain" />
               <div>
                 <p
@@ -261,58 +236,45 @@ const handleCreateTrait = async () => {
                 >
                   {{ trait.name }}
                 </p>
-                <p class="text-[10px] text-slate-500 leading-tight mt-1">
-                  {{ trait.description }}
-                </p>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Tab 3: Admin Create -->
         <div
           v-if="activeTab === 'admin_traits'"
           class="animate-fade-in space-y-4"
         >
-          <h3 class="text-purple-400 font-bold">
-            Tạo Chỉ Số Ẩn Mới (Vĩnh viễn)
-          </h3>
+          <h3 class="text-purple-400 font-bold">Thêm Trait Mới</h3>
           <input
             v-model="newTrait.name"
-            placeholder="Tên Trait (VD: Thánh Lặn)"
+            placeholder="Tên Trait"
             class="input"
           />
           <input
             v-model="newTrait.image_url"
-            placeholder="Link Icon (PNG/JPG)"
-            class="input"
-          />
-          <input
-            v-model="newTrait.description"
-            placeholder="Mô tả..."
+            placeholder="Link Icon URL"
             class="input"
           />
           <select v-model="newTrait.type" class="input">
-            <option value="normal">Thường (Bạc)</option>
-            <option value="gold">Vàng (Hiếm)</option>
+            <option value="normal">Thường</option>
+            <option value="gold">Vàng</option>
           </select>
           <button
             @click="handleCreateTrait"
             class="w-full py-3 bg-purple-600 hover:bg-purple-500 rounded-xl font-bold text-white shadow-lg"
           >
-            + Tạo Vào Database
+            Tạo Mới
           </button>
         </div>
 
-        <!-- Footer Save Button -->
         <div class="mt-6 pt-6 border-t border-white/10 flex justify-end">
           <button
             @click="handleUpdate"
             :disabled="loading"
-            class="px-8 py-3 bg-green-600 hover:bg-green-500 text-white font-black rounded-xl shadow-lg hover:shadow-green-500/30 transition-all flex items-center gap-2"
+            class="px-8 py-3 bg-green-600 hover:bg-green-500 text-white font-black rounded-xl shadow-lg transition-all flex items-center gap-2"
           >
-            <span v-if="loading" class="animate-spin">⏳</span>
-            LƯU THAY ĐỔI
+            <span v-if="loading" class="animate-spin">⏳</span> LƯU THAY ĐỔI
           </button>
         </div>
       </div>
